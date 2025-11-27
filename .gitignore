@@ -56,3 +56,6 @@ htmlcov/
 .ruff_cache/
 
 # 项目特定忽略文件
+
+# LangGraph API 临时文件
+.langgraph_api/

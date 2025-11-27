@@ -7,13 +7,31 @@ import sys
 from typing import Optional
 
 # 添加项目根目录到Python路径
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+sys.path.append(project_root)
 
-from src.agent_1.agent import BasicAgent
+# 使用相对导入
+from agent_1.agent import BasicAgent
 
 
 def main():
     """主函数 - 运行交互式智能体"""
+    import sys
+    
+    # 检查是否有命令行参数
+    if len(sys.argv) > 1:
+        # 命令行模式 - 直接处理参数中的问题
+        question = " ".join(sys.argv[1:])
+        agent = BasicAgent()
+        try:
+            response = agent.invoke(question)
+            print(response)
+        except Exception as e:
+            print(f"处理问题时出错: {str(e)}")
+        return
+    
+    # 交互式模式
     print("=" * 50)
     print("欢迎使用基础LangChain智能体!")
     print("=" * 50)

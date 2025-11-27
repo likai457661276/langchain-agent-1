@@ -9,6 +9,7 @@ from langchain_classic.agents import create_openai_tools_agent, AgentExecutor
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 # from langchain_core.memory import BaseMemory  # 移除这个导入
+from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable
@@ -17,6 +18,19 @@ from langchain_openai import ChatOpenAI  # 硅基流动兼容OpenAI API格式
 from .config import settings
 from .prompts import create_agent_prompt, create_simple_prompt
 from .tools import get_all_tools
+
+
+class ToolNameCallbackHandler(BaseCallbackHandler):
+    """工具名称回调处理器，用于在工具调用时显示工具名称"""
+    
+    def on_tool_start(self, serialized: dict, input_str: str, **kwargs) -> None:
+        """工具开始执行时调用"""
+        tool_name = serialized.get('name', '未知工具') if serialized else '未知工具'
+        print(f"🔧 正在调用工具: {tool_name}")
+        
+    def on_tool_error(self, error: Exception, **kwargs) -> None:
+        """工具执行出错时调用"""
+        print(f"❌ 工具调用出错: {str(error)}")
 
 
 class AgentMemory:  # 移除 BaseMemory 继承
@@ -92,12 +106,19 @@ class BasicAgent:
         # 创建智能体
         agent = create_openai_tools_agent(self.llm, tools, prompt)
         
+        # 创建工具回调处理器
+        tool_callback = ToolNameCallbackHandler()
+        
         # 创建执行器
         agent_executor = AgentExecutor(
             agent=agent,
             tools=tools,
             verbose=True,
             handle_parsing_errors=True,
+            max_iterations=5,  # 限制最大迭代次数
+            early_stopping_method="force",  # 强制停止方法
+            callbacks=[tool_callback],  # 添加工具回调
+            return_intermediate_steps=True,  # 返回中间步骤
         )
         
         return agent_executor
@@ -124,8 +145,24 @@ class BasicAgent:
         """
         try:
             if isinstance(self.agent, AgentExecutor):
+                print(f"🤖 处理输入: {input_text}")
                 result = self.agent.invoke({"input": input_text})
-                return result.get("output", "抱歉，我没有生成回复。")
+                print(f"📊 完整结果: {result}")
+                
+                output = result.get("output", "").strip()
+                intermediate_steps = result.get("intermediate_steps", [])
+                
+                print(f"🔍 中间步骤: {intermediate_steps}")
+                print(f"📝 输出: {output}")
+                
+                # 如果AgentExecutor返回空结果或只有换行符，使用LLM直接回答
+                if not output or output == "":
+                    print("⚠️  AgentExecutor返回空结果，使用LLM直接回答")
+                    # 创建简单的LLM调用
+                    simple_response = self.llm.invoke(f"用户问：{input_text}\n请用中文回答：")
+                    output = simple_response.content.strip()
+                
+                return output if output else "抱歉，我无法生成合适的回复。"
             else:
                 # 简单链式调用
                 messages = self.memory.chat_history.messages

@@ -61,7 +61,7 @@ def create_graph():
         return "__end__"
     
     # 创建图
-    workflow = StateGraph(AgentState)
+    workflow = StateGraph[AgentState, None, AgentState, AgentState](AgentState)
     
     # 添加节点
     workflow.add_node("agent", call_model)

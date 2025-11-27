@@ -4,7 +4,15 @@
 
 from typing import Any, Dict, List, Optional
 
-from langchain_community.tools.tavily_search import TavilySearchResults
+try:
+    # 尝试使用新的langchain-tavily包
+    from langchain_tavily import TavilySearch
+    USE_NEW_TAVILY = True
+except ImportError:
+    # 回退到旧的实现
+    from langchain_community.tools.tavily_search import TavilySearchResults
+    USE_NEW_TAVILY = False
+
 from langchain_core.tools import BaseTool, tool
 
 
@@ -62,11 +70,19 @@ def get_search_tool() -> Optional[BaseTool]:
     from .config import settings
     
     if settings.tavily_api_key:
-        return TavilySearchResults(
-            max_results=5,
-            api_key=settings.tavily_api_key,
-            description="搜索网络获取最新信息"
-        )
+        if USE_NEW_TAVILY:
+            # 使用新的TavilySearch类
+            return TavilySearch(
+                api_key=settings.tavily_api_key,
+                max_results=5
+            )
+        else:
+            # 回退到旧的TavilySearchResults
+            return TavilySearchResults(
+                max_results=5,
+                api_key=settings.tavily_api_key,
+                description="搜索网络获取最新信息"
+            )
     return None
 
 
