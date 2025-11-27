@@ -8,18 +8,21 @@ from fastapi import FastAPI
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langserve import add_routes
-from langserve.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 from .agent import BasicAgent
 from .config import settings
 from .graph import create_graph
 
 
-# 创建FastAPI应用
+# 创建FastAPI应用（禁用文档自动生成功能）
 app = FastAPI(
     title="Agent_1 API",
     description="基于LangChain的基础智能体API服务",
     version="0.1.0",
+    docs_url=None,  # 禁用Swagger UI
+    redoc_url=None,  # 禁用ReDoc
+    openapi_url=None,  # 禁用OpenAPI JSON
 )
 
 
@@ -85,8 +88,8 @@ async def root():
             "agent": "/agent",
             "graph": "/graph",
             "chat": "/chat",
-            "docs": "/docs",
-        }
+        },
+        "note": "API文档功能已禁用"
     }
 
 

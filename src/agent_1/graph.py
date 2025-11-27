@@ -2,14 +2,15 @@
 LangGraph图定义 - 用于LangGraph CLI测试
 """
 
-from typing import Annotated, Optional, TypedDict
+from typing import Annotated, Optional
+from typing_extensions import TypedDict
 
 from langchain_core.messages import BaseMessage
 from langgraph.graph import StateGraph, add_messages
 from langgraph.prebuilt import ToolNode
 
-from .agent import BasicAgent
-from .tools import get_all_tools
+from src.agent_1.agent import BasicAgent
+from src.agent_1.tools import get_all_tools
 
 
 class AgentState(TypedDict):
@@ -20,13 +21,14 @@ class AgentState(TypedDict):
 def create_graph():
     """创建LangGraph图"""
     from langchain_openai import ChatOpenAI
-    from .config import settings
+    from src.agent_1.config import settings
     
-    # 创建LLM
+    # 创建LLM - 使用硅基流动(Silicon Flow) API
     llm = ChatOpenAI(
-        model=settings.openai_model,
-        temperature=settings.openai_temperature,
-        api_key=settings.openai_api_key
+        model=settings.siliconflow_model,
+        temperature=settings.siliconflow_temperature,
+        api_key=settings.siliconflow_api_key,
+        base_url=settings.siliconflow_base_url
     )
     
     # 创建工具

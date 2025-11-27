@@ -6,7 +6,8 @@ import os
 from typing import Optional
 
 from dotenv import load_dotenv
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 # 加载环境变量
 load_dotenv()
@@ -15,18 +16,19 @@ load_dotenv()
 class Settings(BaseSettings):
     """应用设置"""
     
-    # OpenAI配置
-    openai_api_key: str = Field(..., env="OPENAI_API_KEY")
-    openai_model: str = Field(default="gpt-3.5-turbo", env="OPENAI_MODEL")
-    openai_temperature: float = Field(default=0.7, env="OPENAI_TEMPERATURE")
+    # Silicon Flow (硅基流动) 配置 - 兼容OpenAI API格式
+    siliconflow_api_key: str = Field(..., env="SILICONFLOW_API_KEY")
+    siliconflow_model: str = Field(default="THUDM/GLM-Z1-9B-0414", env="SILICONFLOW_MODEL")
+    siliconflow_temperature: float = Field(default=0.7, env="SILICONFLOW_TEMPERATURE")
+    siliconflow_base_url: str = Field(default="https://api.siliconflow.cn/v1", env="SILICONFLOW_BASE_URL")
     
     # Tavily搜索配置
     tavily_api_key: Optional[str] = Field(default=None, env="TAVILY_API_KEY")
     
     # LangSmith配置
-    langchain_tracing_v2: bool = Field(default=False, env="LANGCHAIN_TRACING_V2")
-    langchain_api_key: Optional[str] = Field(default=None, env="LANGCHAIN_API_KEY")
-    langchain_project: str = Field(default="agent_1", env="LANGCHAIN_PROJECT")
+    langsmith_api_key: Optional[str] = Field(default=None, env="LANGSMITH_API_KEY")
+    langsmith_project: str = Field(default="langchain-agent-1", env="LANGSMITH_PROJECT")
+    langsmith_tracing: bool = Field(default=True, env="LANGSMITH_TRACING")
     
     # LangServe配置
     host: str = Field(default="localhost", env="HOST")
@@ -40,10 +42,4 @@ class Settings(BaseSettings):
 # 创建全局设置实例
 settings = Settings()
 
-# 设置LangChain环境变量
-if settings.langchain_tracing_v2:
-    os.environ["LANGCHAIN_TRACING_V2"] = "true"
-    os.environ["LANGCHAIN_PROJECT"] = settings.langchain_project
-    
-    if settings.langchain_api_key:
-        os.environ["LANGCHAIN_API_KEY"] = settings.langchain_api_key
+# 已移除LangSmith相关环境变量设置

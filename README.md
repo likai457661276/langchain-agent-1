@@ -110,12 +110,15 @@ uv run pytest
 uv run pytest --cov=src/agent_1
 ```
 
-### API文档
+### API端点
 
-启动服务后，访问以下地址查看API文档：
+启动服务后，可以使用以下API端点：
 
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+- 聊天接口: `http://localhost:8000/chat`
+- 智能体接口: `http://localhost:8000/agent`
+- 图接口: `http://localhost:8000/graph`
+
+注意：API文档自动生成功能已禁用
 
 ## 🌐 API使用示例
 

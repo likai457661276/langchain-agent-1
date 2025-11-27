@@ -2,35 +2,28 @@
 智能体核心模块 - 实现LangChain智能体的核心功能
 """
 
+import os
 from typing import List, Optional
 
-from langchain.agents import AgentExecutor, create_openai_tools_agent
+from langchain_classic.agents import create_openai_tools_agent, AgentExecutor
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
-from langchain_core.memory import BaseMemory
+# from langchain_core.memory import BaseMemory  # 移除这个导入
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI  # 硅基流动兼容OpenAI API格式
 
 from .config import settings
 from .prompts import create_agent_prompt, create_simple_prompt
 from .tools import get_all_tools
 
 
-class AgentMemory(BaseMemory):
+class AgentMemory:  # 移除 BaseMemory 继承
     """自定义记忆类，用于存储对话历史"""
     
     def __init__(self, chat_history: Optional[BaseChatMessageHistory] = None):
-        super().__init__()
         self.chat_history = chat_history or ChatMessageHistory()
-    
-    @property
-    def memory_variables(self) -> List[str]:
-        return ["chat_history"]
-    
-    def load_memory_variables(self, inputs: dict) -> dict:
-        return {"chat_history": self.chat_history.messages}
     
     def save_context(self, inputs: dict, outputs: dict) -> None:
         # 从输入中获取用户消息
@@ -53,7 +46,7 @@ class BasicAgent:
         model_name: Optional[str] = None,
         temperature: Optional[float] = None,
         use_tools: bool = True,
-        memory: Optional[BaseMemory] = None
+        memory: Optional[AgentMemory] = None
     ):
         """
         初始化智能体
@@ -64,11 +57,19 @@ class BasicAgent:
             use_tools: 是否使用工具，默认为True
             memory: 记忆对象，如果不提供则创建默认记忆
         """
-        # 初始化LLM
+        # 设置LangSmith环境变量
+        if settings.langsmith_api_key:
+            os.environ["LANGSMITH_API_KEY"] = settings.langsmith_api_key
+        if settings.langsmith_project:
+            os.environ["LANGSMITH_PROJECT"] = settings.langsmith_project
+        os.environ["LANGSMITH_TRACING"] = str(settings.langsmith_tracing).lower()
+        
+        # 初始化LLM - 使用硅基流动(Silicon Flow) API
         self.llm = ChatOpenAI(
-            model=model_name or settings.openai_model,
-            temperature=temperature or settings.openai_temperature,
-            api_key=settings.openai_api_key
+            model=model_name or settings.siliconflow_model,
+            temperature=temperature or settings.siliconflow_temperature,
+            api_key=settings.siliconflow_api_key,
+            base_url=settings.siliconflow_base_url  # 硅基流动API端点
         )
         
         # 设置记忆
@@ -95,7 +96,6 @@ class BasicAgent:
         agent_executor = AgentExecutor(
             agent=agent,
             tools=tools,
-            memory=self.memory,
             verbose=True,
             handle_parsing_errors=True,
         )
