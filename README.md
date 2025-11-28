@@ -81,7 +81,11 @@ agent_1/
 │   └── development.md       # 详细开发指南
 ├── pyproject.toml           # 项目配置和依赖
 ├── langgraph.json           # LangGraph配置
+├── Dockerfile               # Docker镜像构建配置
+├── docker-compose.yml       # Docker Compose服务配置
 ├── .env.example             # 环境变量模板
+├── .gitignore               # Git忽略文件
+├── uv.lock                  # UV依赖锁文件
 └── README.md                # 项目说明
 ```
 
@@ -209,6 +213,12 @@ docker-compose down
 
 # 查看服务日志
 docker-compose logs -f
+
+# 重启服务
+docker-compose restart
+
+# 查看服务状态
+docker-compose ps
 ```
 
 ### Docker 开发模式
@@ -239,6 +249,60 @@ docker-compose up
 - 聊天端点：http://localhost:8000/chat
 - 智能体端点：http://localhost:8000/agent/invoke
 - 图端点：http://localhost:8000/graph/invoke
+
+### 快速验证部署
+
+部署完成后，可以通过以下命令验证服务是否正常运行：
+
+```bash
+# 测试API根路径
+curl http://localhost:8000
+
+# 预期返回：
+# {
+#   "name": "Agent_1 API",
+#   "version": "0.1.0",
+#   "description": "基于LangChain的基础智能体API服务",
+#   "endpoints": {...}
+# }
+
+# 测试聊天功能
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "你好", "session_id": "test123"}'
+```
+
+### Docker 网络配置
+
+为了确保容器内的服务可以被宿主机访问，我们做了以下配置：
+
+1. **服务器监听地址**：在 `config.py` 中将 `host` 设置为 `0.0.0.0`，监听所有网络接口
+2. **端口映射**：在 `docker-compose.yml` 中配置 `ports: - "8000:8000"`
+3. **环境变量**：通过 `environment` 设置 `HOST=0.0.0.0` 确保服务监听正确地址
+
+### 常见问题解决
+
+#### 连接被拒绝或重置
+
+如果遇到 `curl: (56) Recv failure: 连接被对方重设` 错误，请检查：
+
+1. 确保容器已正确启动：`docker-compose ps`
+2. 检查服务日志：`docker-compose logs -f`
+3. 验证端口映射：`docker-compose port agent-1 8000`
+4. 重启服务：`docker-compose restart`
+
+#### 服务启动顺序
+
+确保在访问服务前，容器完全启动：
+
+```bash
+# 等待服务完全启动
+docker-compose up -d
+sleep 10  # 等待服务初始化
+
+# 测试连接
+curl http://localhost:8000
+```
 
 ## �📚 详细文档
 
