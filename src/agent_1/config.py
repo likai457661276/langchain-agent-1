@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     langsmith_tracing: bool = Field(default=True, env="LANGSMITH_TRACING")
     
     # LangServe配置
-    host: str = Field(default="localhost", env="HOST")
+    host: str = Field(default="0.0.0.0", env="HOST")  # 监听所有网络接口，支持Docker访问
     port: int = Field(default=8000, env="PORT")
     
     class Config:

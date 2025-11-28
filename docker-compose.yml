@@ -4,9 +4,18 @@ services:
   agent-1:
     build: .
     ports:
-      - "8000:8000"
+      - "8000:8000"  # 宿主机端口:容器端口
+    environment:
+      - HOST=0.0.0.0  # 明确设置监听地址为所有网络接口
+      - PORT=8000
     env_file:
       - .env
     volumes:
       - .:/app
     restart: unless-stopped
+    networks:
+      - agent-network
+
+networks:
+  agent-network:
+    driver: bridge
