@@ -59,3 +59,6 @@ htmlcov/
 
 # LangGraph API 临时文件
 .langgraph_api/
+
+# Trae IDE 生成的临时目录
+.trae/
